@@ -1,0 +1,13 @@
+weibo_yuqing_system/
+├─ app.py               # 主程序（Flask+核心逻辑）
+├─ static/              # 静态资源（图片、CSS、JS）
+│  ├─ css/
+│  │  └─ style.css      # 自定义样式
+│  └─ images/           # 可视化图表生成目录
+├─ templates/           # HTML模板
+│  ├─ base.html         # 基础模板（导航栏+布局）
+│  ├─ login.html        # 登录页
+│  ├─ register.html     # 注册页
+│  └─ dashboard.html    # 仪表盘（核心功能页）
+└─ data/                # SQLite数据库存储目录
+   └─ weibo_yuqing.db   # 自动生成的数据库文件

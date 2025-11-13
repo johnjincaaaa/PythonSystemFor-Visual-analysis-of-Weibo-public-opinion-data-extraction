@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}系统仪表盘{% endblock %}
+
+{% block content %}
+    <div class="dashboard">
+        <h1 class="section-title">欢迎使用微博舆情分析系统</h1>
+
+        <!-- 爬取控制区 -->
+        <div class="section">
+            <div class="card">
+                <div class="card-header">
+                    <h2>数据爬取</h2>
+                </div>
+                <div class="card-body">
+                    {% if error %}
+                        <div class="error-message">{{ error }}</div>
+                    {% endif %}
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="crawl_keyword">搜索关键词</label>
+                                    <input type="text" class="form-control" id="crawl_keyword" name="crawl_keyword"
+                                           placeholder="请输入要分析的关键词（如：人工智能）" required>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <!-- 修改后代码 -->
+                                <div class="form-group">
+                                    <label for="comment_num">爬取评论数</label>
+                                    <input type="number" id="comment_num" name="comment_num" value="20" min="1"
+                                           placeholder="请输入需要爬取的评论数量（如20）">
+                                </div>
+                            </div>
+                            <div class="col-md-3" style="display: flex; align-items: flex-end;">
+                                <button type="submit" name="crawl" class="btn">开始爬取</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据搜索区 -->
+        <div class="section">
+            <div class="card">
+                <div class="card-header">
+                    <h2>数据搜索</h2>
+                </div>
+                <div class="card-body">
+                    <form method="GET">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="keyword">内容关键词</label>
+                                    <input type="text" class="form-control" id="keyword" name="keyword"
+                                           placeholder="搜索评论内容包含的关键词"
+                                           value="{{ request.args.get('keyword', '') }}">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label class="form-label" for="start_time">开始时间</label>
+                                    <input type="date" class="form-control" id="start_time" name="start_time"
+                                           value="{{ request.args.get('start_time', '') }}">
+                                </div>
+                            </div>
+                            <div class="col-md-3" style="display: flex; align-items: flex-end;">
+                                <button type="submit" class="btn">搜索</button>
+                                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary"
+                                   style="margin-left: 10px;">重置</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据展示区 -->
+        <div class="section">
+            <div class="card">
+                <div class="card-header">
+                    <h2>评论数据（共 {{ data|length }} 条）</h2>
+                </div>
+                <div class="card-body">
+                    {% if data %}
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                <tr>
+                                    <th>时间</th>
+                                    <th>用户</th>
+                                    <th>评论内容</th>
+                                    <th>情感标签</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for item in data %}
+                                    <tr>
+                                        <td>{{ item.created_at }}</td>
+                                        <td>{{ item.screen_name }}</td>
+                                        <td>{{ item.text }}</td>
+                                        <td>
+                                            {% if item.sentiment_label == '正面' %}
+                                                <span style="color: #27ae60; font-weight: bold;">{{ item.sentiment_label }}</span>
+                                            {% elif item.sentiment_label == '负面' %}
+                                                <span style="color: #e74c3c; font-weight: bold;">{{ item.sentiment_label }}</span>
+                                            {% else %}
+                                                <span style="color: #f39c12; font-weight: bold;">{{ item.sentiment_label }}</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p style="text-align: center; padding: 20px; color: #777;">暂无数据，请先爬取或调整搜索条件</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 可视化展示区 -->
+        <div class="section">
+            <h2 class="section-title">舆情可视化分析</h2>
+            {% if wordcloud or hot_words or sentiment_pie or trend_line %}
+                <div class="visualization-grid">
+                    {% if wordcloud %}
+                        <div class="card visual-item">
+                            <h3 style="margin-bottom: 15px;">热词云图</h3>
+                            <img src="{{ url_for('static', filename='images/' + wordcloud) }}" alt="热词云图">
+                        </div>
+                    {% endif %}
+                    {% if hot_words %}
+                        <div class="card visual-item">
+                            <h3 style="margin-bottom: 15px;">热词TOP10</h3>
+                            <img src="{{ url_for('static', filename='images/' + hot_words) }}" alt="热词柱状图">
+                        </div>
+                    {% endif %}
+                    {% if sentiment_pie %}
+                        <div class="card visual-item">
+                            <h3 style="margin-bottom: 15px;">情感分布</h3>
+                            <iframe src="{{ url_for('static', filename='images/' + sentiment_pie) }}"
+                                    frameborder="0"></iframe>
+                        </div>
+                    {% endif %}
+                    {% if trend_line %}
+                        <div class="card visual-item">
+                            <h3 style="margin-bottom: 15px;">情感时间趋势</h3>
+                            <iframe src="{{ url_for('static', filename='images/' + trend_line) }}"
+                                    frameborder="0"></iframe>
+                        </div>
+                    {% endif %}
+
+
+                    <!-- 地域分析可视化区域 -->
+                    {% if region_map %}
+                        <div class="visualization-item">
+                            <h3>评论地域分布（IP属地）</h3>
+                            <iframe src="{{ url_for('static', filename='images/' + region_map) }}"
+                                    width="100%" height="500px" frameborder="0"></iframe>
+                        </div>
+                    {% endif %}
+
+                    {% if region_sentiment %}
+                        <div class="visualization-item">
+                            <h3>各地区情感分布</h3>
+                            <iframe src="{{ url_for('static', filename='images/' + region_sentiment) }}"
+                                    width="100%" height="500px" frameborder="0"></iframe>
+                        </div>
+                    {% endif %}
+
+
+                </div>
+            {% else %}
+                <div class="card">
+                    <div class="card-body" style="text-align: center; padding: 40px;">
+                        <p style="color: #777;">暂无可视化数据，请先爬取数据并进行分析</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
